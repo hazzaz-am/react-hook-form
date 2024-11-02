@@ -1,5 +1,8 @@
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, FieldErrors } from "react-hook-form";
 import { DevTool } from "@hookform/devtools";
+import { useEffect } from "react";
+
+let renderCount = 0;
 
 type FormValues = {
 	username: string;
@@ -18,22 +21,25 @@ type FormValues = {
 };
 
 export default function YouTubeForm() {
-	const { register, control, handleSubmit, formState } = useForm<FormValues>({
-		defaultValues: {
-			username: "",
-			email: "",
-			channel: "",
-			social: {
-				facebook: "",
-				twitter: "",
+	const { register, control, handleSubmit, formState, getValues, reset } =
+		useForm<FormValues>({
+			defaultValues: {
+				username: "",
+				email: "",
+				channel: "",
+				social: {
+					facebook: "",
+					twitter: "",
+				},
+				phoneNumbers: ["", ""],
+				phNumbers: [{ number: "" }],
+				age: 0,
+				dob: new Date(),
 			},
-			phoneNumbers: ["", ""],
-			phNumbers: [{ number: "" }],
-			age: 0,
-			dob: new Date(),
-		},
-	});
-	const { errors } = formState;
+			mode: "all"
+		});
+	const { errors, isDirty, isValid, isSubmitted } = formState;
+	// console.log("isDirty-", isDirty, "isValid-", isValid);
 
 	const onSubmit = (data: FormValues) => {
 		console.log(data);
@@ -44,10 +50,33 @@ export default function YouTubeForm() {
 		control,
 	});
 
+	useEffect(() => {
+		if (isSubmitted) {
+			reset()
+		}
+	}, [isSubmitted, reset])
+
+	// useEffect(() => {
+	// 	const subscription = watch((value) => {
+	// 		console.log(value);
+
+	// 		return () => subscription.unsubscribe();
+	// 	});
+	// }, [watch]);
+
+	const handleGetValues = () => {
+		console.log(getValues("username"));
+	};
+
+	const onError = (errors: FieldErrors<FormValues>) => {
+		console.log("ERRORS",errors);
+	};
+
+	renderCount++;
 	return (
 		<div>
-			<h1>YouTube Form</h1>
-			<form onSubmit={handleSubmit(onSubmit)}>
+			<h1>YouTube Form {renderCount / 2}</h1>
+			<form onSubmit={handleSubmit(onSubmit, onError)}>
 				{/* username */}
 				<div className="form-control">
 					<label htmlFor="username">Username</label>
@@ -87,6 +116,7 @@ export default function YouTubeForm() {
 										"This domain is not supported"
 									);
 								},
+								
 							},
 						})}
 					/>
@@ -208,7 +238,10 @@ export default function YouTubeForm() {
 					<p className="error">{errors.dob?.message}</p>
 				</div>
 
-				<button>Submit</button>
+				<button disabled={!isDirty || !isValid}>Submit</button>
+				<button type="button" onClick={handleGetValues}>
+					Get Values
+				</button>
 			</form>
 			<DevTool control={control} />
 		</div>
